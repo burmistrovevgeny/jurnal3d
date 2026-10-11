@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Журнал 3D</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+ body{background:#0f172a!important;color:#f1f5f9;font-family:'Segoe UI',sans-serif;margin:0}
+
+ .header-bar{background:#1e293b;border-bottom:1px solid #334155;padding:.7rem 1.6rem}
+ .h-top{display:flex;justify-content:space-between;align-items:center;gap:1rem}
+ .logo{color:#fbbf24;font-weight:800;text-transform:uppercase;letter-spacing:1px;font-size:.9rem}
+ .hgroup{display:flex;align-items:center;gap:.5rem;padding-left:1rem;border-left:1px solid #334155}
+ .h-label{font-size:.65rem;text-transform:uppercase;color:#64748b;letter-spacing:.5px}
+ .btn-ghost{background:transparent;border:1px solid #334155;color:#94a3b8;border-radius:5px;
+   padding:.35rem .75rem;font-size:.82rem;text-decoration:none}
+ .btn-ghost:hover{border-color:#fbbf24;color:#f1f5f9}
+
+ /* центральный блок: название + кнопка */
+ .h-center{display:flex;align-items:center;justify-content:center;gap:1.2rem;
+   margin-top:.7rem;padding-top:.7rem;border-top:1px solid #24344a}
+ .h-center h1{margin:0;font-size:1.6rem;font-weight:700;letter-spacing:2px;color:#fbbf24}
+ .btn-main{background:#fbbf24;color:#000;border:none;padding:.45rem 1.3rem;font-weight:700;
+   text-transform:uppercase;font-size:.85rem;border-radius:5px;letter-spacing:.4px;text-decoration:none}
+ .btn-main:hover{background:#fcd34d;color:#000}
+ .search-box{width:230px}
+
+ /* таблица: БЕЗ чередования оттенков */
+ .container-main{padding:1.4rem 1.8rem;max-width:1800px;margin:0 auto}
+ .table-wrapper{background:#1e293b;border:1px solid #334155;border-radius:8px;overflow:hidden}
+ .table{background:transparent!important;margin:0}
+ .table thead th{background:#0f172a!important;color:#94a3b8!important;text-transform:uppercase;
+   font-size:.7rem;font-weight:600;padding:.75rem .8rem;border-bottom:2px solid #334155;
+   white-space:nowrap;position:sticky;top:0;z-index:5}
+ .table tbody td{background:#1e293b!important;color:#f1f5f9!important;padding:.7rem .8rem!important;
+   vertical-align:middle;border-bottom:1px solid #2b3a52;border-left:1px solid #2b3a52;font-size:.86rem}
+ .table tbody td:first-child{border-left:none}
+ .table tbody tr:hover td{background:#2b4266!important}
+ .order-num-text{color:#fbbf24!important;font-weight:700}
+ .status-bad{color:#fca5af!important}
+
+ /* чипы статусов */
+ .chip{display:inline-flex;align-items:center;gap:.35rem;padding:.2rem .55rem;border-radius:11px;
+   font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid transparent;white-space:nowrap;max-width:130px}
+ .chip .lbl{overflow:hidden;text-overflow:ellipsis}
+ .chip-empty{border:1px dashed #475569;color:#64748b;min-width:58px;justify-content:center}
+ .chip-done   {background:#00B050;color:#06210f}
+ .chip-partial{background:#C6EFCE;color:#14532d}
+ .chip-issue  {background:#FFC7CE;color:#7f1d1d}
+ .chip-warn   {background:#FFEB9C;color:#713f12}
+ .chip-na     {background:#F2F2F2;color:#334155}
+ .chip-by{font-size:.62rem;opacity:.75;font-weight:400}
+
+ /* примечания */
+ .notes-cell{max-width:420px;min-width:260px;font-size:.82rem;line-height:1.35;color:#cbd5e1;
+   white-space:normal;cursor:help}
+ .notes-cell.clip{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .notes-cell:hover{-webkit-line-clamp:unset;overflow:visible;color:#f1f5f9}
+ .notes-empty{color:#47546a}
+
+ /* легенда */
+ .legend{display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 .9rem}
+
+ /* плавающая панель */
+ .side-panel{position:fixed;right:22px;bottom:22px;z-index:1040;display:flex;flex-direction:column;
+   gap:.55rem;align-items:stretch}
+ .fab{display:flex;align-items:center;gap:.55rem;background:#1e293b;border:1px solid #334155;
+   color:#cbd5e1;border-radius:10px;padding:.55rem .9rem;font-size:.82rem;cursor:pointer;
+   box-shadow:0 6px 18px rgba(0,0,0,.45);text-decoration:none}
+ .fab:hover:not(:disabled){border-color:#fbbf24;color:#fff}
+ .fab:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+ .fab .cnt{margin-left:auto;background:#334155;color:#e2e8f0;border-radius:10px;padding:0 .45rem;
+   font-size:.7rem;min-width:20px;text-align:center}
+ .fab-trash{flex-direction:column;gap:.15rem;align-items:center;padding:.6rem .75rem;min-width:78px;
+   position:relative}
+ .fab-trash .txt{font-size:.72rem;letter-spacing:.5px}
+ .fab-trash .badge{position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;
+   border-radius:9px;padding:1px 6px;font-size:.68rem;font-weight:700}
+
+ .toast-note{position:fixed;bottom:24px;left:24px;z-index:2000;background:#334155;color:#f1f5f9;
+   padding:.8rem 1.2rem;border-radius:6px;border-left:4px solid #fbbf24;box-shadow:0 6px 18px rgba(0,0,0,.5)}
+ .toast-note.err{border-left-color:#ef4444}
+ .modal-content{background:#1e293b;color:#f1f5f9;border:1px solid #334155}
+ .swatch{width:100%;padding:.35rem;border-radius:5px;border:1px solid #334155;font-size:.8rem;cursor:pointer}
+ .swatch:hover{outline:2px solid #fbbf24}
+ .swatch.sel{outline:3px solid #fbbf24;outline-offset:1px}
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div class="h-top">
+    <div class="logo">ЗМК МОСТ</div>
+    <div class="d-flex align-items-center">
+      <div class="hgroup">
+        <span class="h-label">Поиск</span>
+        <form method="get" class="d-flex">
+          {% if is_admin %}<input type="hidden" name="admin" value="true">{% endif %}
+          <input class="form-control form-control-sm search-box" name="q" value="{{ search_query }}"
+                 placeholder="заказ, сотрудник, объект">
+        </form>
+      </div>
+      <div class="hgroup">
+        <span class="h-label">Данные</span>
+        <a class="btn-ghost" href="/download_excel{% if is_admin %}?admin=true{% endif %}">⬇ Excel</a>
+      </div>
+      <div class="hgroup">
+        <span class="h-label">Роль</span>
+        {% if is_admin %}<span class="btn-ghost" style="border-color:#fbbf24;color:#fbbf24">Админ</span>
+        {% else %}<a class="btn-ghost" href="/?admin=true">Войти как админ</a>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="h-center">
+    <h1>ЖУРНАЛ 3D</h1>
+    <a href="/add?admin=true" class="btn-main">＋ Новая запись</a>
+  </div>
+</div>
+
+<div class="container-main">
+  <div class="legend">
+    <span class="chip chip-done">выполнено</span>
+    <span class="chip chip-partial">на допуск</span>
+    <span class="chip chip-issue">проблема</span>
+    <span class="chip chip-warn">не перестреливать</span>
+    <span class="chip chip-na">сборка / нп</span>
+    <span class="chip chip-empty">нет статуса</span>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="table table-hover">
+      <thead><tr>
+        <th>№ ЗАКАЗА</th><th>СОТРУДНИК</th><th>ДАТА</th><th>ОБЪЕКТ</th>
+        <th>POINT CLOUDS</th><th>АНАЛИЗ</th><th>E57</th>
+        <th>ПРИМЕЧАНИЯ</th><th class="text-end">ДЕЙСТВИЯ</th>
+      </tr></thead>
+      <tbody>
+      {% for row in journal_data %}
+        <tr>
+          <td><span class="order-num-text">{{ row.order_num }}</span></td>
+          <td>{{ row.employee or '—' }}</td>
+          <td>{{ row.scan_date or '—' }}</td>
+          <td>{{ row.object_name or '—' }}</td>
+
+          {% for f in ['cloud','analysis','e57'] %}
+          <td>
+            {% set code = row[f ~ '_code'] %}
+            {% set txt  = row[f ~ '_note'] %}
+            <!-- ИСПРАВЛЕНО: добавлен data-by, иначе поле "кто сделал" всегда было пустым -->
+            <span class="chip {{ 'chip-' ~ code if code else 'chip-empty' }}"
+                  data-id="{{ row.id }}" data-field="{{ f }}" data-code="{{ code or '' }}"
+                  data-note="{{ txt or '' }}" data-by="{{ row[f ~ '_by'] or '' }}"
+                  data-order="{{ row.order_num }}"
+                  title="{{ (txt or '') ~ (' — ' ~ row[f ~ '_by'] if row[f ~ '_by'] else '') }}">
+              <span class="lbl">{{ txt if txt else ('—' if code else '＋') }}</span>
+              {% if row[f ~ '_by'] %}<span class="chip-by">{{ row[f ~ '_by'][:4] }}</span>{% endif %}
+            </span>
+          </td>
+          {% endfor %}
+
+          <td class="notes-cell clip">{{ row.notes or '' }}
+            {% if not row.notes %}<span class="notes-empty">—</span>{% endif %}
+          </td>
+
+          <td class="text-end">
+            <a href="/edit/{{ row.id }}?admin=true" class="me-2" title="Редактировать">✏️</a>
+            <button class="chip chip-empty" style="border-color:#7f1d1d;color:#f87171"
+                    data-bs-toggle="modal" data-bs-target="#delModal"
+                    data-id="{{ row.id }}" data-order="{{ row.order_num }}" title="Удалить">🗑️</button>
+          </td>
+        </tr>
+      {% else %}
+        <tr><td colspan="9" class="text-center py-4">Записей не найдено</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="side-panel">
+  <button class="fab" id="btnUndo"><span>↶</span><span>Отменить</span><span class="cnt">0</span></button>
+  <button class="fab" id="btnRedo"><span>↷</span><span>Вернуть</span><span class="cnt">0</span></button>
+  <a class="fab fab-trash" href="/trash{% if is_admin %}?admin=true{% endif %}">
+    {% if trash_count %}<span class="badge">{{ trash_count }}</span>{% endif %}
+    <svg viewBox="0 0 32 32" width="24" height="24">
+      <rect x="11" y="2.5" width="10" height="3" rx="1.5" fill="#9cc3e8"/>
+      <rect x="4" y="5.5" width="24" height="4" rx="2" fill="#bcdcf5"/>
+      <path d="M6.5 10.5h19l-1.7 17.2a2 2 0 0 1-2 1.8H10.2a2 2 0 0 1-2-1.8L6.5 10.5z" fill="#6f9fd0"/>
+      <path d="M6.5 10.5h19l-.3 3.2H6.8z" fill="#8fb8e0"/>
+      <g stroke="#2f5a86" stroke-width="1.5" stroke-linecap="round" opacity=".8">
+        <path d="M12.5 15v10.5"/><path d="M16 15v10.5"/><path d="M19.5 15v10.5"/></g>
+    </svg>
+    <span class="txt">Корзина</span>
+  </a>
+</div>
+
+<!-- удаление -->
+<div class="modal fade" id="delModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Подтверждение удаления</h5>
+    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">Удалить запись <strong id="delOrder"></strong>?
+    <br><small style="color:#94a3b8">В корзину. Отмена — Ctrl+Z.</small></div>
+  <div class="modal-footer">
+    <button class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+    <button class="btn btn-danger" id="delGo">Удалить</button></div>
+</div></div></div>
+
+<!-- выбор статуса -->
+<div class="modal fade" id="stModal" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title" id="stTitle">Статус</h5>
+    <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <div class="d-grid gap-2 mb-3">
+      <button class="swatch chip-done"    data-code="done">✓ выполнено</button>
+      <button class="swatch chip-partial" data-code="partial">◐ на допуск / частично</button>
+      <button class="swatch chip-issue"   data-code="issue">✕ проблема</button>
+      <button class="swatch chip-warn"    data-code="warn">⚠ не перестреливать</button>
+      <button class="swatch chip-na"      data-code="na">— сборка / не применимо</button>
+      <button class="swatch chip-empty"   data-code="">✕ сбросить статус</button>
+    </div>
+    <label class="form-label small" style="color:#94a3b8">Метка (как в Excel: смк, 7 пролет, RMC…)</label>
+    <input class="form-control form-control-sm mb-2" id="stNote">
+    <label class="form-label small" style="color:#94a3b8">Кто сделал</label>
+    <input class="form-control form-control-sm" id="stBy" list="staff" placeholder="сотрудник">
+    <datalist id="staff">
+      {% for n in ['Бурмистров','Цыкальчук','Синюгин','Поплескин','Маканов','Тетерев'] %}
+        <option value="{{ n }}">{% endfor %}
+    </datalist>
+  </div>
+  <div class="modal-footer"><button class="btn btn-primary" id="stGo">Сохранить</button></div>
+</div></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const IS_ADMIN = {{ 'true' if is_admin else 'false' }};
+
+/* ==== ИСТОРИЯ (undo / redo) ====
+   ИСПРАВЛЕНО 1: ключи хранилища v2 -> старые "битые" записи больше не читаются.
+   ИСПРАВЛЕНО 2: clean() выбрасывает из истории повреждённые шаги,
+                 чтобы одна кривая запись не ломала всю кнопку. */
+const K = {u:'zmk_u_v2', r:'zmk_r_v2'};
+function clean(list){
+  if(!Array.isArray(list)) return [];
+  return list.filter(a => a && typeof a === 'object' && a.id != null && (
+    a.t === 'delete' ? true
+    : (a.t === 'status' && a.field && a.prev && a.next)      // без prev/next шаг бесполезен
+  ));
+}
+const rd = k => { try { return clean(JSON.parse(localStorage.getItem(k))); } catch(e){ return []; } };
+const wr = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v.slice(-50))); } catch(e){} };
+
+let undoStack = rd(K.u), redoStack = rd(K.r);
+
+const bU = document.getElementById('btnUndo'), bR = document.getElementById('btnRedo');
+function paint(){
+  if(bU){ bU.disabled = !undoStack.length; bU.querySelector('.cnt').textContent = undoStack.length; }
+  if(bR){ bR.disabled = !redoStack.length; bR.querySelector('.cnt').textContent = redoStack.length; }
+}
+function pushHistory(entry){          // единая точка записи в историю
+  undoStack.push(entry); redoStack = [];
+  wr(K.u, undoStack); wr(K.r, redoStack); paint();
+}
+
+let nEl=null;
+function note(t, isErr){ if(nEl) nEl.remove(); nEl=document.createElement('div');
+  nEl.className='toast-note' + (isErr ? ' err' : ''); nEl.textContent=t; document.body.appendChild(nEl);
+  setTimeout(()=>{ if(nEl){ nEl.remove(); nEl=null; } },2800); }
+
+/* ИСПРАВЛЕНО 3: читаем message с сервера, а не показываем голое "HTTP 400" */
+async function api(path, body){
+  const r = await fetch(path + '?admin=true', {method:'POST',
+    headers:{'Content-Type':'application/json'}, body: body ? JSON.stringify(body) : undefined});
+  let data = null;
+  try { data = await r.json(); } catch(e) {}
+  if(!r.ok || (data && data.status === 'error')){
+    throw new Error((data && data.message) ? data.message : ('Ошибка сервера ' + r.status));
+  }
+  return data || {};
+}
+const reloadSoon = () => setTimeout(()=>location.reload(), 400);
+
+/* ---- удаление ---- */
+const dm = document.getElementById('delModal'); let delId=null;
+dm.addEventListener('show.bs.modal', e => {
+  delId = e.relatedTarget.getAttribute('data-id');
+  document.getElementById('delOrder').textContent = e.relatedTarget.getAttribute('data-order'); });
+document.getElementById('delGo').addEventListener('click', async () => {
+  if(!IS_ADMIN) return note('Нужен режим администратора', true);
+  if(!delId)    return note('Не выбрана запись', true);
+  try {
+    await api('/delete/' + delId);
+    pushHistory({t:'delete', id:delId});
+    bootstrap.Modal.getInstance(dm).hide();
+    note('Удалено — Ctrl+Z отменит'); reloadSoon();
+  } catch(e){ note('Ошибка: ' + e.message, true); } });
+
+/* ---- статусы ---- */
+const sm = document.getElementById('stModal');
+const FIELD_RU = {cloud:'Point Clouds', analysis:'Анализ', e57:'E57'};
+let st = {id:null, field:null};
+
+function clearSel(){
+  document.querySelectorAll('#stModal .swatch').forEach(b => { b.classList.remove('sel'); delete b.dataset.sel; });
+}
+function curSel(){ return document.querySelector('#stModal .swatch[data-sel="1"]'); }
+
+document.querySelectorAll('.chip[data-field]').forEach(ch => ch.addEventListener('click', () => {
+  if(!IS_ADMIN) return note('Менять статусы может только админ', true);
+  st = {id: ch.dataset.id, field: ch.dataset.field};
+  document.getElementById('stTitle').textContent = FIELD_RU[st.field] + ' · заказ ' + ch.dataset.order;
+  document.getElementById('stNote').value = ch.dataset.note || '';
+  document.getElementById('stBy').value   = ch.dataset.by   || '';
+  clearSel();                              // ИСПРАВЛЕНО: выбор не переносится с прошлой ячейки
+  bootstrap.Modal.getOrCreateInstance(sm).show();
+}));
+
+document.querySelectorAll('#stModal .swatch').forEach(b =>
+  b.addEventListener('click', () => { clearSel(); b.dataset.sel = '1'; b.classList.add('sel'); }));
+
+document.getElementById('stGo').addEventListener('click', async () => {
+  if(!IS_ADMIN) return note('Нужен режим администратора', true);
+  if(!st.id)   return note('Не выбрана ячейка', true);
+  const btn = curSel();
+  if(!btn)     return note('Выбери цвет', true);
+  try {
+    const res = await api('/status/' + st.id + '/' + st.field, {
+      code: btn.dataset.code || null,
+      note: document.getElementById('stNote').value.trim(),
+      by:   document.getElementById('stBy').value.trim()
+    });
+    /* ИСПРАВЛЕНО 4 (главное): сохраняем ОБА состояния - prev И next.
+       Раньше в историю клался только prev, и «Вернуть» падало
+       на a.next.code у undefined. */
+    pushHistory({t:'status', id:st.id, field:st.field, prev:res.prev, next:res.next});
+    bootstrap.Modal.getInstance(sm).hide();
+    note('Статус сохранён — Ctrl+Z отменит'); reloadSoon();
+  } catch(e){ note('Ошибка: ' + e.message, true); }
+});
+
+/* ---- undo / redo: симметричные, понимают оба типа действий ---- */
+const statusBody = s => ({ code: s.code || null, note: s.note || '', by: s.by || '' });
+
+async function apply(action, dir){            // dir: 'undo' | 'redo'
+  if(action.t === 'delete'){
+    await api(dir === 'undo' ? '/restore/' + action.id : '/delete/' + action.id);
+  } else {
+    await api('/status/' + action.id + '/' + action.field,
+              statusBody(dir === 'undo' ? action.prev : action.next));
+  }
+}
+
+async function doUndo(){
+  if(!undoStack.length) return note('Нечего отменять', true);
+  const a = undoStack[undoStack.length - 1];
+  try {
+    await apply(a, 'undo');
+    undoStack.pop(); redoStack.push(a);
+    wr(K.u, undoStack); wr(K.r, redoStack); paint();
+    note('Отменено'); reloadSoon();
+  } catch(e){ note('Отмена не удалась: ' + e.message, true); }
+}
+async function doRedo(){
+  if(!redoStack.length) return note('Нечего возвращать', true);
+  const a = redoStack[redoStack.length - 1];
+  try {
+    await apply(a, 'redo');
+    redoStack.pop(); undoStack.push(a);
+    wr(K.u, undoStack); wr(K.r, redoStack); paint();
+    note('Вернуто'); reloadSoon();
+  } catch(e){ note('Возврат не удался: ' + e.message, true); }
+}
+
+bU.addEventListener('click', doUndo); bR.addEventListener('click', doRedo);
+
+document.addEventListener('keydown', e => {
+  if(!(e.ctrlKey||e.metaKey) || e.code!=='KeyZ') return;
+  const el=document.activeElement;
+  if(el && (el.tagName==='INPUT'||el.tagName==='TEXTAREA'||el.isContentEditable)) return;
+  e.preventDefault(); e.shiftKey ? doRedo() : doUndo();
+});
+paint();
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Новая запись</h2>
+    <small>Заполните данные о металлоконструкции</small>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <!-- Карточка формы -->
+        <div class="card bg-transparent border-0">
+            <div class="card-body p-4" style="background-color: #0f172a; border: 1px solid #334155; border-radius: 0.5rem;">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label for="order_num" class="form-label text-muted small text-uppercase fw-bold">Номер заказа</label>
+                            <input type="text" class="form-control search-box" id="order_num" name="order_num" required placeholder="Например: 515-40">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="employee" class="form-label text-muted small text-uppercase fw-bold">Сотрудник</label>
+                            <input type="text" class="form-control search-box" id="employee" name="employee" required placeholder="Фамилия И.О.">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="scan_date" class="form-label text-muted small text-uppercase fw-bold">Дата сканирования</label>
+                            <input type="date" class="form-control search-box" id="scan_date" name="scan_date" 
+                                   value="{{ default_date if default_date else '' }}" required>
+                        </div>
+                        <div class="col-12">
+                            <label for="object_name" class="form-label text-muted small text-uppercase fw-bold">Объект / Маркировка</label>
+                            <input type="text" class="form-control search-box" id="object_name" name="object_name" required placeholder="Например: Технопарк / СВ-1">
+                        </div>
+                        <div class="col-12">
+                            <label for="notes" class="form-label text-muted small text-uppercase fw-bold">Примечания</label>
+                            <textarea class="form-control search-box" id="notes" name="notes" rows="4" placeholder="Любые дополнительные сведения..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label for="file" class="form-label text-muted small text-uppercase fw-bold">Прикрепить файл</label>
+                            <input class="form-control" type="file" id="file" name="file" style="background-color: #0f172a; border-color: #334155; color: white;">
+                            <div class="form-text text-muted small">Максимальный размер: 5MB (PDF, JPG, PNG)</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 d-flex gap-3 justify-content-end">
+                        <a href="{{ url_for('index', admin='true') }}" class="btn btn-custom btn-outline-custom px-4">Отмена</a>
+                        <button type="submit" class="btn btn-custom btn-primary-custom px-4">Сохранить запись</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///journal.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class JournalEntry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    order_num = db.Column(db.String(50), nullable=False)
+    employee = db.Column(db.String(100))
+    scan_date = db.Column(db.String(20))
+    object_name = db.Column(db.String(200))
+    file_path = db.Column(db.String(255))
+    # ВАЖНО: Эта колонка должна существовать в БД
+    is_deleted = db.Column(db.Boolean, default=False) 
+    deleted_at = db.Column(db.DateTime)
+
+@app.route('/')
+def index():
+    # Показываем ТОЛЬКО активные записи
+    entries = JournalEntry.query.filter_by(is_deleted=False).all()
+    return render_template('index.html', journal_data=entries)
+
+@app.route('/delete/<int:id>')
+def delete_entry(id):
+    entry = JournalEntry.query.get_or_404(id)
+    entry.is_deleted = True
+    entry.deleted_at = datetime.now()
+    db.session.commit()
+    # Возвращаем JSON, чтобы JS понял, что всё ок
+    return jsonify({'status': 'success'})
+
+@app.route('/restore/<int:id>')
+def restore_entry(id):
+    entry = JournalEntry.query.get_or_404(id)
+    entry.is_deleted = False
+    entry.deleted_at = None
+    db.session.commit()
+    return jsonify({'status': 'success'})
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all() # Создает таблицы, если их нет
+    app.run(debug=True)

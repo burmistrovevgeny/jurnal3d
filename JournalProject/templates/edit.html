@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="header-card">
+        <h3>Редактирование записи #{{ data.id }}</h3>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card bg-secondary text-white border-0">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">№ Заказа</label>
+                                <input type="text" name="order_num" class="form-control bg-dark border-0 text-white" value="{{ data.order_num }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Сотрудник</label>
+                                <input type="text" name="employee" class="form-control bg-dark border-0 text-white" value="{{ data.employee }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Дата</label>
+                                <input type="date" name="scan_date" class="form-control bg-dark border-0 text-white" value="{{ data.scan_date }}" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Объект</label>
+                                <input type="text" name="object_name" class="form-control bg-dark border-0 text-white" value="{{ data.object_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Заметки</label>
+                                <input type="text" name="notes" class="form-control bg-dark border-0 text-white" value="{{ data.notes }}">
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Загрузить новое фото/акт</label>
+                            <input type="file" name="file" class="form-control bg-dark border-0 text-white" accept="image/*,.pdf">
+                            {% if data.file_path %}
+                                <div class="mt-2 p-2 bg-dark rounded">
+                                    <strong>Текущий файл:</strong> 
+                                    <a href="{{ url_for('uploaded_file', filename=data.file_path) }}" target="_blank" class="text-warning">{{ data.file_path }}</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-zmkm-warning btn-lg w-100">Обновить запись</button>
+                        <a href="/" class="btn btn-outline-secondary btn-lg w-100 mt-2">Отмена</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
